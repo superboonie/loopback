@@ -7,13 +7,14 @@
  * Module Dependencies.
  */
 
+'use strict';
 var g = require('strong-globalize')();
 
 var PersistedModel = require('../../lib/loopback').PersistedModel;
 var loopback = require('../../lib/loopback');
 var utils = require('../../lib/utils');
 var crypto = require('crypto');
-var CJSON = { stringify: require('canonical-json') };
+var CJSON = {stringify: require('canonical-json')};
 var async = require('async');
 var assert = require('assert');
 var debug = require('debug')('loopback:change');
@@ -114,7 +115,7 @@ module.exports = function(Change) {
 
         var msg = g.f('Cannot rectify %s changes:\n%s', modelName, desc);
         err = new Error(msg);
-        err.details = { errors: errors };
+        err.details = {errors: errors};
         return callback(err);
       }
       callback();
@@ -405,7 +406,7 @@ module.exports = function(Change) {
     callback = callback || utils.createPromiseCallback();
 
     if (!Array.isArray(remoteChanges) || remoteChanges.length === 0) {
-      callback(null, { deltas: [], conflicts: [] });
+      callback(null, {deltas: [], conflicts: []});
       return callback.promise;
     }
     var remoteChangeIndex = {};
@@ -420,7 +421,7 @@ module.exports = function(Change) {
     this.find({
       where: {
         modelName: modelName,
-        modelId: { inq: modelIds },
+        modelId: {inq: modelIds},
       },
     }, function(err, allLocalChanges) {
       if (err) return callback(err);
@@ -675,7 +676,7 @@ module.exports = function(Change) {
         if (err) return cb(err);
         conflict.SourceModel.updateLastChange(
           conflict.modelId,
-          { prev: targetChange.rev },
+          {prev: targetChange.rev},
           cb);
       });
   };
@@ -709,7 +710,7 @@ module.exports = function(Change) {
       }
       var inst = new conflict.SourceModel(
         target.toObject(),
-        { persisted: true });
+        {persisted: true});
       inst.save(done);
     });
 

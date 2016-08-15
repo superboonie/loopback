@@ -3,6 +3,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
+'use strict';
 require('./support');
 var loopback = require('../');
 var User, AccessToken;
@@ -12,17 +13,17 @@ describe('User', function() {
   this.timeout(10000);
 
   var validCredentialsEmail = 'foo@bar.com';
-  var validCredentials = { email: validCredentialsEmail, password: 'bar' };
+  var validCredentials = {email: validCredentialsEmail, password: 'bar'};
   var validCredentialsEmailVerified = {
-    email: 'foo1@bar.com', password: 'bar1', emailVerified: true };
+    email: 'foo1@bar.com', password: 'bar1', emailVerified: true};
   var validCredentialsEmailVerifiedOverREST = {
-    email: 'foo2@bar.com', password: 'bar2', emailVerified: true };
-  var validCredentialsWithTTL = { email: 'foo@bar.com', password: 'bar', ttl: 3600 };
+    email: 'foo2@bar.com', password: 'bar2', emailVerified: true};
+  var validCredentialsWithTTL = {email: 'foo@bar.com', password: 'bar', ttl: 3600};
   var validCredentialsWithTTLAndScope = {
-    email: 'foo@bar.com', password: 'bar', ttl: 3600, scope: 'all' };
-  var validMixedCaseEmailCredentials = { email: 'Foo@bar.com', password: 'bar' };
-  var invalidCredentials = { email: 'foo1@bar.com', password: 'invalid' };
-  var incompleteCredentials = { password: 'bar1' };
+    email: 'foo@bar.com', password: 'bar', ttl: 3600, scope: 'all'};
+  var validMixedCaseEmailCredentials = {email: 'Foo@bar.com', password: 'bar'};
+  var invalidCredentials = {email: 'foo1@bar.com', password: 'invalid'};
+  var incompleteCredentials = {password: 'bar1'};
 
   // Create a local app variable to prevent clashes with the global
   // variable shared by all tests. While this should not be necessary if
@@ -32,33 +33,33 @@ describe('User', function() {
   beforeEach(function setupAppAndModels(done) {
     // override the global app object provided by test/support.js
     // and create a local one that does not share state with other tests
-    app = loopback({ localRegistry: true, loadBuiltinModels: true });
-    app.set('remoting', { errorHandler: { debug: true, log: false }});
-    app.dataSource('db', { connector: 'memory' });
+    app = loopback({localRegistry: true, loadBuiltinModels: true});
+    app.set('remoting', {errorHandler: {debug: true, log: false}});
+    app.dataSource('db', {connector: 'memory'});
 
     // setup Email model, it's needed by User tests
     app.dataSource('email', {
       connector: loopback.Mail,
-      transports: [{ type: 'STUB' }],
+      transports: [{type: 'STUB'}],
     });
     var Email = app.registry.getModel('Email');
-    app.model(Email, { dataSource: 'email' });
+    app.model(Email, {dataSource: 'email'});
 
     // attach User and related models
     User = app.registry.createModel('TestUser', {}, {
       base: 'User',
-      http: { path: 'test-users' },
+      http: {path: 'test-users'},
     });
-    app.model(User, { dataSource: 'db' });
+    app.model(User, {dataSource: 'db'});
 
     AccessToken = app.registry.getModel('AccessToken');
-    app.model(AccessToken, { dataSource: 'db' });
+    app.model(AccessToken, {dataSource: 'db'});
 
     User.email = Email;
 
     // Update the AccessToken relation to use the subclass of User
-    AccessToken.belongsTo(User, { as: 'user', foreignKey: 'userId' });
-    User.hasMany(AccessToken, { as: 'accessTokens', foreignKey: 'userId' });
+    AccessToken.belongsTo(User, {as: 'user', foreignKey: 'userId'});
+    User.hasMany(AccessToken, {as: 'accessTokens', foreignKey: 'userId'});
 
     // Speed up the password hashing algorithm
     // for tests using the built-in User model
@@ -67,8 +68,8 @@ describe('User', function() {
     // allow many User.afterRemote's to be called
     User.setMaxListeners(0);
 
-    app.enableAuth({ dataSource: 'db' });
-    app.use(loopback.token({ model: AccessToken }));
+    app.enableAuth({dataSource: 'db'});
+    app.use(loopback.token({model: AccessToken}));
     app.use(loopback.rest());
     app.model(User);
 
@@ -81,7 +82,7 @@ describe('User', function() {
 
   describe('User.create', function() {
     it('Create a new user', function(done) {
-      User.create({ email: 'f@b.com', password: 'bar' }, function(err, user) {
+      User.create({email: 'f@b.com', password: 'bar'}, function(err, user) {
         assert(!err);
         assert(user.id);
         assert(user.email);
@@ -92,7 +93,7 @@ describe('User', function() {
 
     it('Create a new user (email case-sensitivity off)', function(done) {
       User.settings.caseSensitiveEmail = false;
-      User.create({ email: 'F@b.com', password: 'bar' }, function(err, user) {
+      User.create({email: 'F@b.com', password: 'bar'}, function(err, user) {
         if (err) return done(err);
 
         assert(user.id);
@@ -103,7 +104,7 @@ describe('User', function() {
     });
 
     it('Create a new user (email case-sensitive)', function(done) {
-      User.create({ email: 'F@b.com', password: 'bar' }, function(err, user) {
+      User.create({email: 'F@b.com', password: 'bar'}, function(err, user) {
         if (err) return done(err);
 
         assert(user.id);
@@ -115,7 +116,7 @@ describe('User', function() {
     });
 
     it('Email is required', function(done) {
-      User.create({ password: '123' }, function(err) {
+      User.create({password: '123'}, function(err) {
         assert(err);
         assert.equal(err.name, 'ValidationError');
         assert.equal(err.statusCode, 422);
@@ -131,9 +132,9 @@ describe('User', function() {
 
     // will change in future versions where password will be optional by default
     it('Password is required', function(done) {
-      var u = new User({ email: '123@456.com' });
+      var u = new User({email: '123@456.com'});
 
-      User.create({ email: 'c@d.com' }, function(err) {
+      User.create({email: 'c@d.com'}, function(err) {
         assert(err);
 
         done();
@@ -141,7 +142,7 @@ describe('User', function() {
     });
 
     it('Requires a valid email', function(done) {
-      User.create({ email: 'foo@', password: '123' }, function(err) {
+      User.create({email: 'foo@', password: '123'}, function(err) {
         assert(err);
 
         done();
@@ -149,8 +150,8 @@ describe('User', function() {
     });
 
     it('Requires a unique email', function(done) {
-      User.create({ email: 'a@b.com', password: 'foobar' }, function() {
-        User.create({ email: 'a@b.com', password: 'batbaz' }, function(err) {
+      User.create({email: 'a@b.com', password: 'foobar'}, function() {
+        User.create({email: 'a@b.com', password: 'batbaz'}, function(err) {
           assert(err, 'should error because the email is not unique!');
 
           done();
@@ -160,10 +161,10 @@ describe('User', function() {
 
     it('Requires a unique email (email case-sensitivity off)', function(done) {
       User.settings.caseSensitiveEmail = false;
-      User.create({ email: 'A@b.com', password: 'foobar' }, function(err) {
+      User.create({email: 'A@b.com', password: 'foobar'}, function(err) {
         if (err) return done(err);
 
-        User.create({ email: 'a@b.com', password: 'batbaz' }, function(err) {
+        User.create({email: 'a@b.com', password: 'batbaz'}, function(err) {
           assert(err, 'should error because the email is not unique!');
 
           done();
@@ -172,8 +173,8 @@ describe('User', function() {
     });
 
     it('Requires a unique email (email case-sensitive)', function(done) {
-      User.create({ email: 'A@b.com', password: 'foobar' }, function(err, user1) {
-        User.create({ email: 'a@b.com', password: 'batbaz' }, function(err, user2) {
+      User.create({email: 'A@b.com', password: 'foobar'}, function(err, user1) {
+        User.create({email: 'a@b.com', password: 'batbaz'}, function(err, user2) {
           if (err) return done(err);
 
           assert.notEqual(user1.email, user2.email);
@@ -184,8 +185,8 @@ describe('User', function() {
     });
 
     it('Requires a unique username', function(done) {
-      User.create({ email: 'a@b.com', username: 'abc', password: 'foobar' }, function() {
-        User.create({ email: 'b@b.com', username: 'abc',  password: 'batbaz' }, function(err) {
+      User.create({email: 'a@b.com', username: 'abc', password: 'foobar'}, function() {
+        User.create({email: 'b@b.com', username: 'abc',  password: 'batbaz'}, function(err) {
           assert(err, 'should error because the username is not unique!');
 
           done();
@@ -194,8 +195,8 @@ describe('User', function() {
     });
 
     it('Requires a password to login with basic auth', function(done) {
-      User.create({ email: 'b@c.com' }, function(err) {
-        User.login({ email: 'b@c.com' }, function(err, accessToken) {
+      User.create({email: 'b@c.com'}, function(err) {
+        User.login({email: 'b@c.com'}, function(err, accessToken) {
           assert(!accessToken, 'should not create a accessToken without a valid password');
           assert(err, 'should not login without a password');
           assert.equal(err.code, 'LOGIN_FAILED');
@@ -206,14 +207,14 @@ describe('User', function() {
     });
 
     it('Hashes the given password', function() {
-      var u = new User({ username: 'foo', password: 'bar' });
+      var u = new User({username: 'foo', password: 'bar'});
       assert(u.password !== 'bar');
     });
 
     it('does not hash the password if it\'s already hashed', function() {
-      var u1 = new User({ username: 'foo', password: 'bar' });
+      var u1 = new User({username: 'foo', password: 'bar'});
       assert(u1.password !== 'bar');
-      var u2 = new User({ username: 'foo', password: u1.password });
+      var u2 = new User({username: 'foo', password: u1.password});
       assert(u2.password === u1.password);
     });
 
@@ -221,13 +222,13 @@ describe('User', function() {
       var usersId;
       async.series([
         function(next) {
-          User.create({ email: 'b@c.com', password: 'bar' }, function(err, user) {
+          User.create({email: 'b@c.com', password: 'bar'}, function(err, user) {
             usersId = user.id;
             next(err);
           });
         },
         function(next) {
-          User.login({ email: 'b@c.com', password: 'bar' }, function(err, accessToken) {
+          User.login({email: 'b@c.com', password: 'bar'}, function(err, accessToken) {
             if (err) return next(err);
             assert(accessToken.userId);
             next();
@@ -242,7 +243,7 @@ describe('User', function() {
           User.findById(usersId, function(err, userFound)  {
             if (err) return next(err);
             expect(userFound).to.equal(null);
-            AccessToken.find({ where: { userId: usersId }}, function(err, tokens) {
+            AccessToken.find({where: {userId: usersId}}, function(err, tokens) {
               if (err) return next(err);
               expect(tokens.length).to.equal(0);
               next();
@@ -261,8 +262,8 @@ describe('User', function() {
       async.series([
         function(next) {
           User.create([
-            { name: 'myname', email: 'b@c.com', password: 'bar' },
-            { name: 'myname', email: 'd@c.com', password: 'bar' },
+            {name: 'myname', email: 'b@c.com', password: 'bar'},
+            {name: 'myname', email: 'd@c.com', password: 'bar'},
           ], function(err, users) {
             userIds = users.map(function(u) {
               return u.id;
@@ -271,7 +272,7 @@ describe('User', function() {
           });
         },
         function(next) {
-          User.login({ email: 'b@c.com', password: 'bar' }, function(err, accessToken) {
+          User.login({email: 'b@c.com', password: 'bar'}, function(err, accessToken) {
             accessTokenId = accessToken.userId;
             if (err) return next(err);
             assert(accessTokenId);
@@ -279,7 +280,7 @@ describe('User', function() {
           });
         },
         function(next) {
-          User.login({ email: 'd@c.com', password: 'bar' }, function(err, accessToken) {
+          User.login({email: 'd@c.com', password: 'bar'}, function(err, accessToken) {
             accessTokenId = accessToken.userId;
             if (err) return next(err);
             assert(accessTokenId);
@@ -287,15 +288,15 @@ describe('User', function() {
           });
         },
         function(next) {
-          User.deleteAll({ name: 'myname' }, function(err, user) {
+          User.deleteAll({name: 'myname'}, function(err, user) {
             next(err);
           });
         },
         function(next) {
-          User.find({ where: { name: 'myname' }}, function(err, userFound)  {
+          User.find({where: {name: 'myname'}}, function(err, userFound)  {
             if (err) return next(err);
             expect(userFound.length).to.equal(0);
-            AccessToken.find({ where: { userId: { inq: userIds }}}, function(err, tokens) {
+            AccessToken.find({where: {userId: {inq: userIds}}}, function(err, tokens) {
               if (err) return next(err);
               expect(tokens.length).to.equal(0);
               next();
@@ -334,7 +335,7 @@ describe('User', function() {
 
       it('Reports invalid password', function() {
         try {
-          var u = new User({ username: 'foo', password: 'aa' });
+          var u = new User({username: 'foo', password: 'aa'});
           assert(false, 'Error should have been thrown');
         } catch (e) {
           // Ignore
@@ -342,7 +343,7 @@ describe('User', function() {
       });
 
       it('Hashes the given password', function() {
-        var u = new User({ username: 'foo', password: 'bar' });
+        var u = new User({username: 'foo', password: 'bar'});
         assert(u.password === 'BAR');
       });
     });
@@ -370,7 +371,7 @@ describe('User', function() {
 
     it('rejects passwords longer than 72 characters', function(done) {
       try {
-        User.create({ email: 'b@c.com', password: pass73Char }, function(err) {
+        User.create({email: 'b@c.com', password: pass73Char}, function(err) {
           if (err) return done (err);
           done(new Error('User.create() should have thrown an error.'));
         });
@@ -382,7 +383,7 @@ describe('User', function() {
 
     it('rejects a new user with password longer than 72 characters', function(done) {
       try {
-        var u = new User({ username: 'foo', password: pass73Char });
+        var u = new User({username: 'foo', password: pass73Char});
         assert(false, 'Error should have been thrown');
       } catch (e) {
         expect(e).to.match(/Password too long/);
@@ -391,7 +392,7 @@ describe('User', function() {
     });
 
     it('accepts passwords that are exactly 72 characters long', function(done) {
-      User.create({ email: 'b@c.com', password: pass72Char }, function(err, user) {
+      User.create({email: 'b@c.com', password: pass72Char}, function(err, user) {
         if (err) return done(err);
         User.findById(user.id, function(err, userFound)  {
           if (err) return done (err);
@@ -402,9 +403,9 @@ describe('User', function() {
     });
 
     it('allows login with password exactly 72 characters long', function(done) {
-      User.create({ email: 'b@c.com', password: pass72Char }, function(err) {
+      User.create({email: 'b@c.com', password: pass72Char}, function(err) {
         if (err) return done(err);
-        User.login({ email: 'b@c.com', password: pass72Char }, function(err, accessToken) {
+        User.login({email: 'b@c.com', password: pass72Char}, function(err, accessToken) {
           if (err) return done(err);
           assertGoodToken(accessToken);
           assert(accessToken.id);
@@ -414,9 +415,9 @@ describe('User', function() {
     });
 
     it('rejects password reset when password is more than 72 chars', function(done) {
-      User.create({ email: 'b@c.com', password: pass72Char }, function(err) {
+      User.create({email: 'b@c.com', password: pass72Char}, function(err) {
         if (err) return done (err);
-        User.resetPassword({ email: 'b@c.com', password: pass73Char }, function(err) {
+        User.resetPassword({email: 'b@c.com', password: pass73Char}, function(err) {
           assert(err);
           expect(err).to.match(/Password too long/);
           done();
@@ -436,7 +437,7 @@ describe('User', function() {
 
     it('Should be able to find lowercase email with mixed-case email query', function(done) {
       User.settings.caseSensitiveEmail = false;
-      User.find({ where: { email: validMixedCaseEmailCredentials.email }}, function(err, result) {
+      User.find({where: {email: validMixedCaseEmailCredentials.email}}, function(err, result) {
         if (err) done(err);
 
         assert(result[0], 'The query did not find the user');
@@ -533,7 +534,7 @@ describe('User', function() {
       // Override createAccessToken
       User.prototype.createAccessToken = function(ttl, cb) {
         // Reduce the ttl by half for testing purpose
-        this.accessTokens.create({ ttl: ttl / 2 }, cb);
+        this.accessTokens.create({ttl: ttl / 2}, cb);
       };
       User.login(validCredentialsWithTTL, function(err, accessToken) {
         assert(accessToken.userId);
@@ -562,7 +563,7 @@ describe('User', function() {
         // Override createAccessToken
         User.prototype.createAccessToken = function(ttl, options, cb) {
           // Reduce the ttl by half for testing purpose
-          this.accessTokens.create({ ttl: ttl / 2, scopes: options.scope }, cb);
+          this.accessTokens.create({ttl: ttl / 2, scopes: options.scope}, cb);
         };
         User.login(validCredentialsWithTTLAndScope, function(err, accessToken) {
           assert(accessToken.userId);
@@ -572,7 +573,7 @@ describe('User', function() {
           assert.equal(accessToken.scopes, 'all');
 
           User.findById(accessToken.userId, function(err, user) {
-            user.createAccessToken(120, { scope: 'default' }, function(err, accessToken) {
+            user.createAccessToken(120, {scope: 'default'}, function(err, accessToken) {
               assert(accessToken.userId);
               assert(accessToken.id);
               assert.equal(accessToken.ttl, 60);
@@ -747,9 +748,9 @@ describe('User', function() {
       var longPassword = new Array(80).join('a');
       var oldHash = bcrypt.hashSync(longPassword, bcrypt.genSaltSync(1));
 
-      User.create({ email: 'b@c.com', password: oldHash }, function(err) {
+      User.create({email: 'b@c.com', password: oldHash}, function(err) {
         if (err) return done(err);
-        User.login({ email: 'b@c.com', password: longPassword }, function(err, accessToken) {
+        User.login({email: 'b@c.com', password: longPassword}, function(err, accessToken) {
           if (err) return done(err);
           assert(accessToken.id);
           // we are logged in, the test passed
@@ -775,7 +776,7 @@ describe('User', function() {
     });
 
     it('Require valid and complete credentials for email verification error', function(done) {
-      User.login({ email: validCredentialsEmail }, function(err, accessToken) {
+      User.login({email: validCredentialsEmail}, function(err, accessToken) {
         // strongloop/loopback#931
         // error message should be "login failed"
         // and not "login failed as the email has not been verified"
@@ -789,7 +790,7 @@ describe('User', function() {
 
     it('Require valid and complete credentials for email verification error - promise variant',
     function(done) {
-      User.login({ email: validCredentialsEmail })
+      User.login({email: validCredentialsEmail})
         .then(function(accessToken) {
           done();
         })
@@ -871,7 +872,7 @@ describe('User', function() {
         .post('/test-users/login')
         .expect('Content-Type', /json/)
         .expect(401)
-        .send({ email: validCredentialsEmail })
+        .send({email: validCredentialsEmail})
         .end(function(err, res) {
           if (err) return done(err);
 
@@ -918,12 +919,12 @@ describe('User', function() {
         base: 'AccessToken',
       });
 
-      app.model(AccessToken, { dataSource: 'db' });
-      app.model(User, { dataSource: 'db' });
+      app.model(AccessToken, {dataSource: 'db'});
+      app.model(User, {dataSource: 'db'});
 
       // Update the AccessToken relation to use the subclass of User
-      AccessToken.belongsTo(User, { as: 'user', foreignKey: 'userId' });
-      User.hasMany(AccessToken, { as: 'accessTokens', foreignKey: 'userId' });
+      AccessToken.belongsTo(User, {as: 'user', foreignKey: 'userId'});
+      User.hasMany(AccessToken, {as: 'accessTokens', foreignKey: 'userId'});
 
       // allow many User.afterRemote's to be called
       User.setMaxListeners(0);
@@ -1078,7 +1079,7 @@ describe('User', function() {
       login(logout);
 
       function login(fn) {
-        User.login({ email: 'foo@bar.com', password: 'bar' }, fn);
+        User.login({email: 'foo@bar.com', password: 'bar'}, fn);
       }
 
       function logout(err, accessToken) {
@@ -1091,7 +1092,7 @@ describe('User', function() {
       login(logout);
 
       function login(fn) {
-        User.login({ email: 'foo@bar.com', password: 'bar' }, fn);
+        User.login({email: 'foo@bar.com', password: 'bar'}, fn);
       }
 
       function logout(err, accessToken) {
@@ -1110,7 +1111,7 @@ describe('User', function() {
           .post('/test-users/login')
           .expect('Content-Type', /json/)
           .expect(200)
-          .send({ email: 'foo@bar.com', password: 'bar' })
+          .send({email: 'foo@bar.com', password: 'bar'})
           .end(function(err, res) {
             if (err) return done(err);
 
@@ -1149,7 +1150,7 @@ describe('User', function() {
 
   describe('user.hasPassword(plain, fn)', function() {
     it('Determine if the password matches the stored password', function(done) {
-      var u = new User({ username: 'foo', password: 'bar' });
+      var u = new User({username: 'foo', password: 'bar'});
       u.hasPassword('bar', function(err, isMatch) {
         assert(isMatch, 'password doesnt match');
 
@@ -1158,7 +1159,7 @@ describe('User', function() {
     });
 
     it('Determine if the password matches the stored password - promise variant', function(done) {
-      var u = new User({ username: 'foo', password: 'bar' });
+      var u = new User({username: 'foo', password: 'bar'});
       u.hasPassword('bar')
         .then(function(isMatch) {
           assert(isMatch, 'password doesnt match');
@@ -1171,7 +1172,7 @@ describe('User', function() {
     });
 
     it('should match a password when saved', function(done) {
-      var u = new User({ username: 'a', password: 'b', email: 'z@z.net' });
+      var u = new User({username: 'a', password: 'b', email: 'z@z.net'});
 
       u.save(function(err, user) {
         User.findById(user.id, function(err, uu) {
@@ -1185,7 +1186,7 @@ describe('User', function() {
     });
 
     it('should match a password after it is changed', function(done) {
-      User.create({ email: 'foo@baz.net', username: 'bat', password: 'baz' }, function(err, user) {
+      User.create({email: 'foo@baz.net', username: 'bat', password: 'baz'}, function(err, user) {
         User.findById(user.id, function(err, foundUser) {
           assert(foundUser);
           foundUser.hasPassword('baz', function(err, isMatch) {
@@ -1240,7 +1241,7 @@ describe('User', function() {
           .post('/test-users')
           .expect('Content-Type', /json/)
           .expect(200)
-          .send({ email: 'bar@bat.com', password: 'bar' })
+          .send({email: 'bar@bat.com', password: 'bar'})
           .end(function(err, res) {
             if (err) return done(err);
           });
@@ -1277,7 +1278,7 @@ describe('User', function() {
 
         request(app)
           .post('/test-users')
-          .send({ email: 'bar@bat.com', password: 'bar' })
+          .send({email: 'bar@bat.com', password: 'bar'})
           .expect('Content-Type', /json/)
           .expect(200)
           .end(function(err, res) {
@@ -1296,7 +1297,7 @@ describe('User', function() {
             redirect: '/',
             protocol: ctx.req.protocol,
             host: ctx.req.get('host'),
-            headers: { 'message-id': 'custom-header-value' },
+            headers: {'message-id': 'custom-header-value'},
           };
 
           user.verify(options, function(err, result) {
@@ -1311,7 +1312,7 @@ describe('User', function() {
           .post('/test-users')
           .expect('Content-Type', /json/)
           .expect(200)
-          .send({ email: 'bar@bat.com', password: 'bar' })
+          .send({email: 'bar@bat.com', password: 'bar'})
           .end(function(err, res) {
             if (err) return done(err);
           });
@@ -1356,7 +1357,7 @@ describe('User', function() {
           .post('/test-users')
           .expect('Content-Type', /json/)
           .expect(200)
-          .send({ email: 'bar@bat.com', password: 'bar' })
+          .send({email: 'bar@bat.com', password: 'bar'})
           .end(function(err, res) {
             if (err) return done(err);
           });
@@ -1394,7 +1395,7 @@ describe('User', function() {
           .post('/test-users')
           .expect('Content-Type', /json/)
           .expect(200)
-          .send({ email: 'bar@bat.com', password: 'bar' })
+          .send({email: 'bar@bat.com', password: 'bar'})
           .end(function(err, res) {
             if (err) return done(err);
           });
@@ -1427,7 +1428,7 @@ describe('User', function() {
             .post('/test-users')
             .expect('Content-Type', /json/)
             .expect(200)
-            .send({ email: 'bar@bat.com', password: 'bar' })
+            .send({email: 'bar@bat.com', password: 'bar'})
             .end(function(err, res) {
               if (err) return done(err);
             });
@@ -1459,7 +1460,7 @@ describe('User', function() {
             .post('/test-users')
             .expect('Content-Type', /json/)
             .expect(200)
-            .send({ email: 'bar@bat.com', password: 'bar' })
+            .send({email: 'bar@bat.com', password: 'bar'})
             .end(function(err, res) {
               if (err) return done(err);
             });
@@ -1491,7 +1492,7 @@ describe('User', function() {
             .post('/test-users')
             .expect('Content-Type', /json/)
             .expect(200)
-            .send({ email: 'bar@bat.com', password: 'bar' })
+            .send({email: 'bar@bat.com', password: 'bar'})
             .end(function(err, res) {
               if (err) return done(err);
             });
@@ -1523,7 +1524,7 @@ describe('User', function() {
             .post('/test-users')
             .expect('Content-Type', /json/)
             .expect(200)
-            .send({ email: 'bar@bat.com', password: 'bar' })
+            .send({email: 'bar@bat.com', password: 'bar'})
             .end(function(err, res) {
               if (err) return done(err);
             });
@@ -1570,7 +1571,7 @@ describe('User', function() {
           .post('/test-users')
           .expect('Content-Type', /json/)
           .expect(302)
-          .send({ email: 'bar@bat.com', password: 'bar' })
+          .send({email: 'bar@bat.com', password: 'bar'})
           .end(function(err, res) {
             if (err) return done(err);
           });
@@ -1695,7 +1696,7 @@ describe('User', function() {
       });
 
       it('Reports when email is not found', function(done) {
-        User.resetPassword({ email: 'unknown@email.com' }, function(err) {
+        User.resetPassword({email: 'unknown@email.com'}, function(err) {
           assert(err);
           assert.equal(err.code, 'EMAIL_NOT_FOUND');
           assert.equal(err.statusCode, 404);
@@ -1751,7 +1752,7 @@ describe('User', function() {
           .post('/test-users/reset')
           .expect('Content-Type', /json/)
           .expect(204)
-          .send({ email: email })
+          .send({email: email})
           .end(function(err, res) {
             if (err) return done(err);
 
@@ -1778,7 +1779,7 @@ describe('User', function() {
   describe('ttl', function() {
     var User2;
     beforeEach(function() {
-      User2 = loopback.User.extend('User2', {}, { ttl: 10 });
+      User2 = loopback.User.extend('User2', {}, {ttl: 10});
     });
     it('should override ttl setting in based User model', function() {
       expect(User2.settings.ttl).to.equal(10);

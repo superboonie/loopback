@@ -1,9 +1,10 @@
+'use strict';
 var expect = require('chai').expect;
 var http = require('http');
 var loopback = require('..');
 var supertest = require('supertest');
 
-var AN_OBJECT_VALUE = { name: 'an-object' };
+var AN_OBJECT_VALUE = {name: 'an-object'};
 
 describe('KeyValueModel', function() {
   var request, app, CacheItem;
@@ -61,7 +62,7 @@ describe('KeyValueModel', function() {
       CacheItem.set('expire-key', AN_OBJECT_VALUE, function(err) {
         if (err) return done(err);
         request.put('/CacheItems/expire-key/expire')
-          .send({ ttl: 10 })
+          .send({ttl: 10})
           .end(function(err, res) {
             if (err) return done(err);
             setTimeout(function() {
@@ -77,13 +78,13 @@ describe('KeyValueModel', function() {
 
     it('returns 404 when expiring a key that does not exist', function(done) {
       request.put('/CacheItems/key-does-not-exist/expire')
-        .send({ ttl: 10 })
+        .send({ttl: 10})
         .expect(404, done);
     });
   });
 
   function setupAppAndCacheItem() {
-    app = loopback({ localRegistry: true, loadBuiltinModels: true });
+    app = loopback({localRegistry: true, loadBuiltinModels: true});
     app.use(loopback.rest());
 
     CacheItem = app.registry.createModel({
@@ -91,8 +92,8 @@ describe('KeyValueModel', function() {
       base: 'KeyValueModel',
     });
 
-    app.dataSource('kv', { connector: 'kv-memory' });
-    app.model(CacheItem, { dataSource: 'kv' });
+    app.dataSource('kv', {connector: 'kv-memory'});
+    app.model(CacheItem, {dataSource: 'kv'});
   }
 
   var _server, _requestHandler; // eslint-disable-line one-var

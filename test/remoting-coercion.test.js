@@ -3,6 +3,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
+'use strict';
 var loopback = require('../');
 var request = require('supertest');
 
@@ -12,7 +13,7 @@ describe('remoting coercion', function() {
     var app = loopback();
     app.use(loopback.rest());
 
-    var TestModel = app.model('TestModel', { base: 'Model', dataSource: null, public: true });
+    var TestModel = app.model('TestModel', {base: 'Model', dataSource: null, public: true});
     TestModel.test = function(inst, cb) {
       called = true;
       assert(inst instanceof TestModel);
@@ -20,8 +21,8 @@ describe('remoting coercion', function() {
       cb();
     };
     TestModel.remoteMethod('test', {
-      accepts: { arg: 'inst', type: 'TestModel', http: { source: 'body' }},
-      http: { path: '/test', verb: 'post' },
+      accepts: {arg: 'inst', type: 'TestModel', http: {source: 'body'}},
+      http: {path: '/test', verb: 'post'},
     });
 
     request(app)

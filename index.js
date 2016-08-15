@@ -3,8 +3,9 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
+'use strict';
 var SG = require('strong-globalize');
-SG.SetRootDir(__dirname, { autonomousMsgLoading: 'all' });
+SG.SetRootDir(__dirname, {autonomousMsgLoading: 'all'});
 
 /**
  * loopback ~ public api

@@ -3,6 +3,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
+'use strict';
 var g = require('strong-globalize')();
 
 var loopback = require('../../');
@@ -16,11 +17,11 @@ var schema = {
 
 var Color = app.model('color', schema);
 
-app.dataSource('db', { adapter: 'memory' }).attach(Color);
+app.dataSource('db', {adapter: 'memory'}).attach(Color);
 
-Color.create({ name: 'red' });
-Color.create({ name: 'green' });
-Color.create({ name: 'blue' });
+Color.create({name: 'red'});
+Color.create({name: 'green'});
+Color.create({name: 'blue'});
 
 app.listen(3000);
 

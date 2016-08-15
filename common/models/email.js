@@ -15,6 +15,7 @@
  * @inherits {Model}
  */
 
+'use strict';
 var g = require('strong-globalize')();
 
 module.exports = function(Email) {
