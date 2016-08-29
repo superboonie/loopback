@@ -1106,7 +1106,6 @@ describe('User', function() {
     it('invalidates session when password is reset', function(done) {
       var email = validCredentialsEmailVerified.email;
       var password = validCredentialsEmailVerified.password;
-      var at1, at2;
       var usersId, tokenPassword;
 
       async.series([
@@ -1114,7 +1113,6 @@ describe('User', function() {
           User.login({ email: email, password: password }, function(err, accessToken1) {
             if (err) return next(err);
             assert(accessToken1);
-            at1 = accessToken1;
             usersId = accessToken1.userId;
             next();
           });
@@ -1123,7 +1121,6 @@ describe('User', function() {
           User.login({ email: email, password: password }, function(err, accessToken2) {
             if (err) return next(err);
             assert(accessToken2);
-            at2 = accessToken2;
 
           var calledBack = false;
           User.resetPassword({email: email,}, function() {
