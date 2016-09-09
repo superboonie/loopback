@@ -577,18 +577,6 @@ module.exports = function(User) {
         err.code = 'RESET_FAILED_EMAIL_NOT_VERIFIED';
         return cb(err);
       }
-
-      // var AccessToken = UserModel.relations.accessTokens.modelTo;
-      // AccessToken.find({ where: { userId: user.id }}, function(err, tokens) {
-      //   tokens.forEach(function(token) {
-      //     AccessToken.destroyById(token.id, function(err, info) {
-      //       if (err) return cb(err);
-      //     });
-      //   });
-      // });
-
-
-
       user.accessTokens.create({ ttl: ttl }, function(err, accessToken) {
         if (err) {
           return cb(err);
@@ -677,6 +665,27 @@ module.exports = function(User) {
       if (body && body.emailVerified) {
         body.emailVerified = false;
       }
+      next();
+    });
+
+
+    UserModel.observe('before save', function(ctx, next) {
+      var userEmail, oldPassword;
+      if(ctx.isNewInstance) {
+        userEmail = ctx.instance.email;
+        oldPassword = ctx.instance.password;
+      } else {
+        return next();
+      }
+      UserModel.observe('after save', function(ctx,next) {
+        var AccessToken = ctx.Model.relations.accessTokens.modelTo;
+        if (userEmail === ctx.instance.email && oldPassword !== ctx.instance.password) {
+          AccessToken.deleteAll({userId: ctx.instance.id}, function (err, info) {
+            if (err) return next(err);
+          })
+        }
+        return next();
+      })
       next();
     });
 
