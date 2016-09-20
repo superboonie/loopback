@@ -698,6 +698,13 @@ module.exports = function(User) {
       });
       if (!idsToExpire.length) return next();
       AccessToken.deleteAll({ userId: { inq: idsToExpire }}, next);
+
+      if (UserModel.settings.emailVerificationRequired) {
+        ctx.Model.find({ where: {email: newEmail}}, function(err, userFound) {
+          if (err) return next(err);
+          userFound.updateAttribute('emailVerified', false, next);
+        })
+      }
     });
 
     UserModel.remoteMethod(
