@@ -15,6 +15,7 @@ var path = require('path');
 var SALT_WORK_FACTOR = 10;
 var crypto = require('crypto');
 var MAX_PASSWORD_LENGTH = 72;
+var async = require('async');
 var bcrypt;
 try {
   // Try the native module first
@@ -697,14 +698,20 @@ module.exports = function(User) {
         return u.id;
       });
       if (!idsToExpire.length) return next();
-      AccessToken.deleteAll({ userId: { inq: idsToExpire }}, next);
-
-      if (UserModel.settings.emailVerificationRequired) {
-        ctx.Model.find({ where: {email: newEmail}}, function(err, userFound) {
-          if (err) return next(err);
-          userFound.updateAttribute('emailVerified', false, next);
-        })
-      }
+      async.series([
+        function deleteSessions(callback) {
+           AccessToken.deleteAll({ userId: { inq: idsToExpire }}, callback);
+        },
+        function updateEmailVerified(callback) {
+          if (!ctx.Model.settings.emailVerificationRequired) return callback();
+            ctx.Model.updateAll({ id: { inq: idsToExpire }}, {emailVerified: false}, function(err, info) {
+              if (err) return callback(err);
+              console.log(info);
+              callback();
+            });
+        },
+      ], next);
+      //next();
     });
 
     UserModel.remoteMethod(

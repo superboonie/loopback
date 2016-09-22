@@ -2127,31 +2127,36 @@ describe('User', function() {
   });
 
   describe('Verification after updating email', function() {
-    var user;
-    var currentEmailCredentials = { email: 'original@example.com', password: 'bar', emailVerified: true };
-    var updatedEmailCredentials = { email: 'updated@example.com', password: 'bar' };
+    var mynonverifiedUser;
+    var originalMyEmailCred = { email: 'original@example.com', password: 'bar',
+    emailVerified: true };
+    var myUpdatedCred = { email: 'updated@example.com'};
     it('sets verification to false after email update if verification is required', function(done) {
       User.settings.emailVerificationRequired = true;
       async.series([
         function createUser(next) {
-          User.create(currentEmailCredentials, function(err, specialInstance) {
-                if (err) return next (err);
-                user = specialInstance;
-                next();
-              });
-        },
-        function loginUser(next) {
-          User.login({ email: 'original@example.com', password: 'bar'}, function(err, ats) {
+          User.create(originalMyEmailCred, function(err, specialInstance) {
             if (err) return next (err);
+            mynonverifiedUser = specialInstance;
             next();
           });
         },
         function updateUser(next) {
-          user.updateAttribute('email', updatedEmailCredentials.email, function(err, info) {
-                  if (err) return next (err);
-                  assert.equal(info.emailVerified, false)
-                  next();
-                });
+          mynonverifiedUser.updateAttribute('email', myUpdatedCred.email,
+          function(err, info) {
+            if (err) return next (err);
+            assert.equal(info.email, myUpdatedCred.email);
+            assert.equal(info.emailVerified, false);
+            next();
+          });
+        },
+        function findUser(next) {
+          User.findById(mynonverifiedUser.id, function(err, info) {
+            if (err) return next (err);
+            assert.equal(info.email, myUpdatedCred.email);
+            assert.equal(info.emailVerified, false);
+            next();
+          });
         },
       ], done);
     });
