@@ -691,6 +691,7 @@ module.exports = function(User) {
       if (!ctx.Model.relations.accessTokens) return next();
       var AccessToken = ctx.Model.relations.accessTokens.modelTo;
       var newEmail = (ctx.instance || ctx.data).email;
+      if (!newEmail) return next();
       if (!ctx.hookState.originalUserData) return next();
       var idsToExpire = ctx.hookState.originalUserData.filter(function(u) {
         return u.email !== newEmail;
@@ -700,18 +701,17 @@ module.exports = function(User) {
       if (!idsToExpire.length) return next();
       async.series([
         function deleteSessions(callback) {
-           AccessToken.deleteAll({ userId: { inq: idsToExpire }}, callback);
+          AccessToken.deleteAll({ userId: { inq: idsToExpire }}, callback);
         },
         function updateEmailVerified(callback) {
           if (!ctx.Model.settings.emailVerificationRequired) return callback();
-            ctx.Model.updateAll({ id: { inq: idsToExpire }}, {emailVerified: false}, function(err, info) {
+          ctx.Model.updateAll({ id: { inq: idsToExpire }}, { emailVerified: false },
+            function(err, info) {
               if (err) return callback(err);
-              console.log(info);
               callback();
             });
         },
       ], next);
-      //next();
     });
 
     UserModel.remoteMethod(
