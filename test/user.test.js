@@ -2131,7 +2131,8 @@ describe('User', function() {
     var originalMyEmailCred = { email: 'original@example.com', password: 'bar',
     emailVerified: true };
     var myUpdatedCred = { email: 'updated@example.com' };
-    it('sets verification to false after email update if verification is required', function(done) {
+    it('sets verification to false after email update if verification is required',
+    function(done) {
       User.settings.emailVerificationRequired = true;
       async.series([
         function createUser(next) {
@@ -2145,7 +2146,7 @@ describe('User', function() {
           nonVerifiedUser.updateAttribute('email', myUpdatedCred.email,
           function(err, info) {
             if (err) return next (err);
-             assert.equal(info.email, myUpdatedCred.email);
+            assert.equal(info.email, myUpdatedCred.email);
             next();
           });
         },
