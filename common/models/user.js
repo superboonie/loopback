@@ -690,6 +690,7 @@ module.exports = function(User) {
     UserModel.observe('after save', function afterEmailUpdate(ctx, next) {
       if (!ctx.Model.relations.accessTokens) return next();
       var AccessToken = ctx.Model.relations.accessTokens.modelTo;
+      if (!ctx.instance && !ctx.data) return next();
       var newEmail = (ctx.instance || ctx.data).email;
       if (!newEmail) return next();
       if (!ctx.hookState.originalUserData) return next();
